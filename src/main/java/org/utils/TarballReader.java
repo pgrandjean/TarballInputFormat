@@ -75,9 +75,6 @@ public class TarballReader extends RecordReader<Text, Text> {
         key.clear();
         value.clear();
         
-        // provide timestamp of file creation as a temp solution for
-        // missing UNB segments in DCS FM
-        
         Calendar timestamp = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         timestamp.setTimeInMillis(tarEntry.getModTime().getTime());
         
