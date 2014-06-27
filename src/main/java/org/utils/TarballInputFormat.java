@@ -20,7 +20,7 @@ import org.apache.hadoop.mapreduce.lib.input.FileInputFormat;
  * @date 27 Jun 2014
  * @since 1.6.x
  */
-public class TarballInputFormat extends FileInputFormat<Text, Text> {
+public class TarballInputFormat extends FileInputFormat<TarballEntry, Text> {
 
     public TarballInputFormat() {
     }
@@ -31,7 +31,7 @@ public class TarballInputFormat extends FileInputFormat<Text, Text> {
     }
     
     @Override
-    public RecordReader<Text, Text> createRecordReader(InputSplit split, TaskAttemptContext context) {
+    public RecordReader<TarballEntry, Text> createRecordReader(InputSplit split, TaskAttemptContext context) {
         return new TarballReader();
     }
 }

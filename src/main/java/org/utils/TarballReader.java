@@ -1,11 +1,12 @@
 package org.utils;
 
 import java.io.IOException;
-import java.text.SimpleDateFormat;
+import java.io.InputStream;
 import java.util.Calendar;
 import java.util.TimeZone;
 import java.util.logging.Level;
 import java.util.logging.Logger;
+import java.util.zip.GZIPInputStream;
 
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
@@ -34,26 +35,31 @@ import org.kamranzafar.jtar.TarInputStream;
  * @date 27 Jun 2014
  * @since 1.6.x
  */
-public class TarballReader extends RecordReader<Text, Text> {
-
-    private SimpleDateFormat dateFormatter = new SimpleDateFormat("'D'yyMMdd.'T'HHmmss");
+public class TarballReader extends RecordReader<TarballEntry, Text> {
     
     private long pos = 0;
 
     private long end = 0;
     
+    private String tarball = null;
+    
     private TarInputStream in = null;
     
-    private Text key = null;
+    private TarballEntry key = null;
 
     private Text value = null;
 
     public TarballReader() {}
 
-    protected TarballReader(TarInputStream in) {
-        this.in = in;
-        this.key = new Text();
+    protected TarballReader(String tarball) throws IOException {
+        InputStream in = this.getClass().getResourceAsStream(tarball);
+        GZIPInputStream gzip = new GZIPInputStream(in);
+        TarInputStream tar = new TarInputStream(gzip);
+        
+        this.in = tar;
+        this.key = new TarballEntry();
         this.value = new Text();
+        this.tarball = tarball;
     }
     
     @Override
@@ -69,6 +75,7 @@ public class TarballReader extends RecordReader<Text, Text> {
     @Override
     public synchronized boolean nextKeyValue() throws IOException {
         TarEntry tarEntry = in.getNextEntry();
+        while (tarEntry != null && tarEntry.isDirectory()) tarEntry = in.getNextEntry();
         if (tarEntry == null) return false;
         
         // clear K/V
@@ -78,7 +85,8 @@ public class TarballReader extends RecordReader<Text, Text> {
         Calendar timestamp = Calendar.getInstance(TimeZone.getTimeZone("UTC"));
         timestamp.setTimeInMillis(tarEntry.getModTime().getTime());
         
-        key.set(tarEntry.getName() + "." + dateFormatter.format(timestamp.getTime()));
+        key.setTarball(tarball);
+        key.setEntry(tarEntry);
 
         // read tar entry
         long tarSize = tarEntry.getSize();
@@ -107,7 +115,7 @@ public class TarballReader extends RecordReader<Text, Text> {
     }
 
     @Override
-    public synchronized Text getCurrentKey() {
+    public synchronized TarballEntry getCurrentKey() {
         return key;
     }
 
@@ -126,11 +134,12 @@ public class TarballReader extends RecordReader<Text, Text> {
         try {
             pos = 0;
             end = Long.MAX_VALUE;
-            key = new Text();
+            key = new TarballEntry();
             value = new Text();
 
             FileSplit split = (FileSplit) isplit;
             Path file = split.getPath();
+            tarball = file.getName();
             
             Configuration conf = context.getConfiguration();
             CompressionCodecFactory compressionCodecs = new CompressionCodecFactory(conf);
