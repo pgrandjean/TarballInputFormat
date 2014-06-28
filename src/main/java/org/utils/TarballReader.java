@@ -8,6 +8,8 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 import java.util.zip.GZIPInputStream;
 
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
 import org.apache.hadoop.conf.Configuration;
 import org.apache.hadoop.fs.FSDataInputStream;
 import org.apache.hadoop.fs.FileSystem;
@@ -36,6 +38,8 @@ import org.kamranzafar.jtar.TarInputStream;
  * @since 1.6.x
  */
 public class TarballReader extends RecordReader<TarballEntry, Text> {
+    
+    private static final Log LOG = LogFactory.getLog(TarballReader.class);
     
     private long pos = 0;
 
@@ -105,11 +109,7 @@ public class TarballReader extends RecordReader<TarballEntry, Text> {
         // set pos
         pos += bufSize;
         
-        if (value.getLength() == 0) {
-            key = null;
-            value = null;
-            return false;
-        }
+        LOG.debug("read " + key);
         
         return true;
     }

@@ -26,47 +26,18 @@ public class TarballEntry implements WritableComparable<TarballEntry> {
     
     private long modtime = 0L;
     
-    protected TarballEntry() {}
+    /**
+     * Default constructor required by Hadoop.
+     */
+    public TarballEntry() {}
     
-    protected void setEntry(TarEntry entry) {
-        this.entry = entry.getName();
-        this.modtime = entry.getModTime().getTime();
-    }
-
-    protected void setTarball(String tarball) {
-        this.tarball = tarball;
-    }
-    
-    protected void clear() {
+    public void clear() {
         tarball = null;
         entry = null;
         modtime = 0L;
     }
-    
-    public String getTarball() {
-        return tarball;
-    }
-    
-    public String getEntry() {
-        return entry;
-    }
-    
-    public long getModTime() {
-        return modtime;
-    }
-    
-    public void write(DataOutput out) throws IOException {
-        out.writeUTF(tarball);
-        out.writeUTF(entry);
-        out.writeLong(modtime);
-    }
 
-    public void readFields(DataInput in) throws IOException {
-        this.tarball = in.readUTF();
-        this.entry = in.readUTF();
-        this.modtime = in.readLong();
-    }
-
+    @Override
     public int compareTo(TarballEntry o) {
         int comp = this.tarball.compareTo(o.tarball);
         if (comp != 0) return comp;
@@ -77,5 +48,45 @@ public class TarballEntry implements WritableComparable<TarballEntry> {
         if (this.modtime < o.modtime) return -1;
         else if (this.modtime == o.modtime) return 0;
         else return 1;
+    }
+    
+    public String getEntry() {
+        return entry;
+    }
+    
+    public long getModTime() {
+        return modtime;
+    }
+    
+    public String getTarball() {
+        return tarball;
+    }
+
+    @Override
+    public void readFields(DataInput in) throws IOException {
+        this.tarball = in.readUTF();
+        this.entry = in.readUTF();
+        this.modtime = in.readLong();
+    }
+    
+    public void setEntry(TarEntry entry) {
+        this.entry = entry.getName();
+        this.modtime = entry.getModTime().getTime();
+    }
+
+    public void setTarball(String tarball) {
+        this.tarball = tarball;
+    }
+
+    @Override
+    public String toString() {
+        return tarball + "/" + entry + "/" + modtime;
+    }
+
+    @Override
+    public void write(DataOutput out) throws IOException {
+        out.writeUTF(tarball);
+        out.writeUTF(entry);
+        out.writeLong(modtime);
     }
 }
